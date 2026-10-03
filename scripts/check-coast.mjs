@@ -74,13 +74,17 @@ assert.ok(terrain.sand.every(value => value === 255), 'Beach-only terrain lost s
 for (const mask of [terrain.rock, terrain.path, terrain.gully, terrain.scarp, terrain.seagrass, terrain.rubble]) {
   assert.ok(mask.every(value => value === 0), 'Beach-only terrain retains rock or vegetation cover');
 }
-// Fixed seed-7 coast samples protect the original swash slope and shallow-water profile.
+// Sea-level land area was 819,790 m² before resizing; the real footprint must halve.
+const beachAreaM2 = terrain.heights.reduce((area, height) => area + (height > 0 ? terrain.texel ** 2 : 0), 0);
+const beachAreaRatio = beachAreaM2 / 819790;
+assert.ok(Math.abs(beachAreaRatio - 0.5) < 0.01, 'Beach footprint is not half its original area');
+// The original coast heights survive at their scaled positions (two bilinear resamplings).
 for (const [x, z, height] of [
   [-100, -55, 0.4188689589500427], [-20, -45, 0.2514282613992691],
   [0, -40, -0.023624965164344758], [70, -57, 0.8281079083681107],
   [120, -55, 0.23795964568853378], [-20, -20, -1.194947510957718],
   [0, 0, -1.962782472372055], [70, -25, -1.1507116854190826],
-]) assert.ok(Math.abs(terrain.heightAt(x, z) - height) < 1e-6, 'Beach edit changed the tuned surf profile');
+]) assert.ok(Math.abs(terrain.heightAt(10 + (x - 10) * Math.SQRT1_2, -42 + (z + 42) * Math.SQRT1_2) - height) < 0.02, 'Beach resizing lost the surf profile');
 const bounds = terrain.boundsFor(-160, -140, 160, 120);
 const normal = new Vector3();
 let dry = 0, submerged = 0, terrainSamples = 0;
@@ -129,5 +133,5 @@ for (let j = 4; j < res - 4; j++) {
 }
 
 console.log(JSON.stringify({ status: 'passed', modules: modules.size, localImports, assets: [...assets].sort(),
-  terrainSamples, shorelineCells: shore.res ** 2, shoreDirectionCells: 64,
+  terrainSamples, beachAreaM2, beachAreaRatio, shorelineCells: shore.res ** 2, shoreDirectionCells: 64,
   limitation: 'CPU and asset checks only; WebGPU rendering requires a compatible browser.' }, null, 2));

@@ -11,7 +11,8 @@ reproduced below and in `src/tidewater/LICENSE`.
 
 The original ocean FFT, shore waves, breaking waves, spray, swash simulation,
 sand shading, terrain, atmosphere and postprocessing are
-retained. The terrain is adapted to a low sandy coast; mountains, scattered rocks
+retained. The terrain is adapted to a low sandy coast with half the former land
+area (each horizontal axis scaled by sqrt(0.5)); mountains, scattered rocks
 and procedural vegetation are removed from the active viewer. `CoastalApp.js`
 assembles these into an environment viewer. The input
 module was adapted for pointer/touch dragging and keyboard accessibility. Cloud

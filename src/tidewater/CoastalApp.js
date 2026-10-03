@@ -42,7 +42,7 @@ import { updateCameraVelocity, useStaticVelocity } from './post/CameraVelocity.j
 
 const up = new Vector3( 0, 1, 0 );
 const views = {
-	shore: { p: [ 70, 3.1, -57 ], yaw: 1.92, pitch: -0.12 },
+	shore: { p: [ 70, 3.1, -52 ], yaw: 2.18, pitch: -0.12 },
 	overview: { p: [ 60, 72, 125 ], yaw: Math.PI * 0.08, pitch: -0.49 },
 	waterline: { p: [ 12, 0.26, -16 ], yaw: 1.98, pitch: -0.02 },
 };

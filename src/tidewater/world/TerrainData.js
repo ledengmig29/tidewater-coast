@@ -410,6 +410,25 @@ export class TerrainData {
 		}
 
 		tick( 'border' );
+
+		// Scale the baked footprint around the central shoreline; sqrt(1/2) per axis
+		// halves its area. Every CPU/GPU consumer receives this same resized heightmap.
+		const scale = Math.SQRT1_2;
+		const smaller = new Float32Array( H.length );
+		for ( let j = 0; j < res; j ++ ) {
+
+			const z = origin + ( j + 0.5 ) * this.texel;
+			const sourceZ = - 42 + ( z + 42 ) / scale;
+			for ( let i = 0; i < res; i ++ ) {
+
+				const x = origin + ( i + 0.5 ) * this.texel;
+				smaller[ j * res + i ] = sampleGrid( H, res, origin, this.texel, 10 + ( x - 10 ) / scale, sourceZ );
+
+			}
+
+		}
+		this.heights = smaller;
+		tick( 'beachSize' );
 		T.total = Object.values( T ).reduce( ( a, b ) => a + b, 0 );
 
 	}
