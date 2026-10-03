@@ -1,0 +1,20 @@
+node_modules/
+dist/
+artifacts/
+.impeccable/
+video/
+.env
+.env.*
+*.log
+
+# Retired exhibition files remain local.
+ASSETS.md
+public/exhibit/
+public/fonts/
+public/textures/
+src/*
+!src/coast-main.js
+!src/coast.css
+!src/tidewater/
+scripts/*
+!scripts/check-coast.mjs
