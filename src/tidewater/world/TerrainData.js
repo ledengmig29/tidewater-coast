@@ -411,23 +411,26 @@ export class TerrainData {
 
 		tick( 'border' );
 
-		// Scale the baked footprint around the central shoreline; sqrt(1/2) per axis
-		// halves its area. Every CPU/GPU consumer receives this same resized heightmap.
-		const scale = Math.SQRT1_2;
-		const smaller = new Float32Array( H.length );
+		// A 16 m rounded square is about 250 m²: twice the 124.8 m² house/lanai
+		// floorplan. Keep its dry core under the home and slope into the same ocean.
 		for ( let j = 0; j < res; j ++ ) {
 
 			const z = origin + ( j + 0.5 ) * this.texel;
-			const sourceZ = - 42 + ( z + 42 ) / scale;
 			for ( let i = 0; i < res; i ++ ) {
 
 				const x = origin + ( i + 0.5 ) * this.texel;
-				smaller[ j * res + i ] = sampleGrid( H, res, origin, this.texel, 10 + ( x - 10 ) / scale, sourceZ );
+				const qx = Math.abs( x - 28 ) - 5.3;
+				const qz = Math.abs( z + 73.4 ) - 5.3;
+				const distance = Math.hypot( Math.max( qx, 0 ), Math.max( qz, 0 ) ) + Math.min( Math.max( qx, qz ), 0 ) - 2.7;
+				const inland = Math.max( 0, - distance );
+				const offshore = Math.max( 0, distance );
+				H[ j * res + i ] = distance < 0
+					? 2.7 * smoothstep( 0, 2.1, inland ) + 0.035 * Math.sin( x * 0.7 ) * Math.sin( z * 0.4 ) * smoothstep( 0.6, 2.1, inland )
+					: - Math.min( 90, offshore * 0.12 + offshore * offshore * 0.003 );
 
 			}
 
 		}
-		this.heights = smaller;
 		tick( 'beachSize' );
 		T.total = Object.values( T ).reduce( ( a, b ) => a + b, 0 );
 

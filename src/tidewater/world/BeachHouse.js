@@ -191,15 +191,15 @@ export function createBeachHouse( terrainData ) {
 	for ( const x of [ -5.05, 5.05 ] ) netRail( [ x, 4.2 ], [ x, 6.90 ] );
 
 	const stairX = -0.6, stairs = [];
-	const stairGround = terrainData.heightAt( site.x + stairX, site.z + 9.32 );
+	const stairGround = terrainData.heightAt( site.x + stairX, site.z + 8.16 );
 	const rise = ( floorY - stairGround ) / 5;
 	for ( let i = 0; i < 4; i ++ ) {
-		const z = 7.3 + i * 0.58;
+		const z = 7.14 + i * 0.28;
 		const groundY = terrainData.heightAt( site.x + stairX, site.z + z );
 		const topY = floorY - rise * ( i + 1 );
 		const bottomY = groundY - 0.06;
-		box( wood, 3, topY - bottomY, 0.61, stairX, ( topY + bottomY ) / 2 - floorY, z );
-		box( wood, 3.06, 0.045, 0.63, stairX, topY - floorY + 0.012, z );
+		box( wood, 3, topY - bottomY, 0.30, stairX, ( topY + bottomY ) / 2 - floorY, z );
+		box( wood, 3.06, 0.045, 0.32, stairX, topY - floorY + 0.012, z );
 		stairs.push( { x: site.x + stairX, z: site.z + z, groundY, bottomY, topY } );
 	}
 

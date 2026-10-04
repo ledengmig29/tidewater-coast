@@ -17,6 +17,7 @@ import { TerrainData } from './world/TerrainData.js';
 import { TerrainGPU } from './world/TerrainGPU.js';
 import { Terrain } from './world/Terrain.js';
 import { createBeachHouse } from './world/BeachHouse.js';
+import { createBeachGarden } from './world/BeachGarden.js';
 import { computeShoreField } from './world/ShoreField.js';
 import { WORLD } from './world/WorldLayout.js';
 import { OceanFFT } from './ocean/OceanFFT.js';
@@ -43,10 +44,10 @@ import { updateCameraVelocity, useStaticVelocity } from './post/CameraVelocity.j
 
 const up = new Vector3( 0, 1, 0 );
 const views = {
-	shore: { p: [ 48, 4.4, -47 ], yaw: 0.94, pitch: 0.035, portrait: { p: [ 48, 4.4, -47 ], yaw: 0.63, pitch: 0.07 } },
+	shore: { p: [ 48, 4.4, -47 ], yaw: 0.94, pitch: 0.035, portrait: { p: [ 54, 5.2, -39 ], yaw: 0.63, pitch: 0.04 } },
 	home: { p: [ 41, 4.7, -59 ], yaw: 0.68, pitch: 0.1, portrait: { p: [ 44, 4.7, -46 ], yaw: 0.53, pitch: 0.065 } },
-	overview: { p: [ 72, 38, -7 ], yaw: 0.6, pitch: -0.43 },
-	waterline: { p: [ 12, 0.26, -16 ], yaw: 1.98, pitch: -0.02 },
+	overview: { p: [ 49, 21, -43 ], yaw: 0.61, pitch: -0.46 },
+	waterline: { p: [ 27, 0.26, -56 ], yaw: -0.04, pitch: 0.055 },
 };
 
 export class CoastalApp {
@@ -88,17 +89,20 @@ export class CoastalApp {
 		this.shadows.layerMask = ( 1 << LAYERS.OPAQUE ) | ( 1 << LAYERS.TRANSPARENT );
 		this.environment = new Environment( renderer, scene, this.sky );
 
-		await progress( 0.12, '生成沙滩与海底地形' );
+		await progress( 0.12, '生成木屋周围的小沙岛' );
 		this.terrainData = new TerrainData();
 		this.setView( 'shore' );
-		this.shoreField = computeShoreField( this.terrainData, { res: 512, swellDir: [ WORLD.swellDir.x, WORLD.swellDir.y ] } );
+		this.shoreField = computeShoreField( this.terrainData, { res: 1024, swellDir: [ WORLD.swellDir.x, WORLD.swellDir.y ] } );
 		this.terrainGPU = new TerrainGPU( this.terrainData, this.shoreField );
 		this.terrain = new Terrain( { scene, terrainData: this.terrainData, terrainGPU: this.terrainGPU, renderer } );
 		this.terrain.mesh.material.appliesHillShadow = true;
-		await progress( 0.24, '搭建海边木屋与露台' );
+		await progress( 0.24, '搭建木屋、露台与热带花园' );
 		this.beachHouse = createBeachHouse( this.terrainData );
 		scene.add( this.beachHouse );
 		useStaticVelocity( this.beachHouse );
+		this.beachGarden = createBeachGarden( this.terrainData );
+		scene.add( this.beachGarden );
+		useStaticVelocity( this.beachGarden );
 
 		await progress( 0.27, '模拟海浪、碎浪与泡沫' );
 		this.fft = new OceanFFT( renderer );

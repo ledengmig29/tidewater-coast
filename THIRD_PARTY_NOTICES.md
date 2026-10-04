@@ -11,15 +11,16 @@ reproduced below and in `src/tidewater/LICENSE`.
 
 The original ocean FFT, shore waves, breaking waves, spray, swash simulation,
 sand shading, terrain, atmosphere and postprocessing are
-retained. The terrain is adapted to a low sandy coast with half the former land
-area (each horizontal axis scaled by sqrt(0.5)); mountains, scattered rocks
-and procedural vegetation are removed from the active viewer. `CoastalApp.js`
+retained. The terrain is adapted to a compact low sand island around the house,
+about twice the house and lanai floor area; mountains, scattered rocks and the
+upstream procedural vegetation are removed from the active viewer. `CoastalApp.js`
 assembles these into an environment viewer. The input
 module was adapted for pointer/touch dragging and keyboard accessibility. Cloud
 and SMAA asset paths were relocated to `public/tidewater/`. `TerrainGPU` retains
 the shore field on the CPU so the existing wave-direction cache can be built.
-`world/BeachHouse.js` adds original procedural house and porch geometry to this
-viewer; it is not an upstream asset or a character model. The fishing game,
+`world/BeachHouse.js` and `world/BeachGarden.js` add original procedural house,
+porch, palm, cycad and flower geometry; these are not upstream assets or
+character models. The fishing game,
 vendors, characters, boat, village, sound system and scanned models are omitted.
 
 The cloud noise files under `public/tidewater/clouds/` come from the same source.
