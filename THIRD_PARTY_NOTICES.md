@@ -25,7 +25,7 @@ the shore field on the CPU so the existing wave-direction cache can be built.
 `world/BeachHouse.js` and `world/BeachGarden.js` add original procedural house,
 porch, palm, cycad and flower geometry; these are not upstream assets or
 character models. `world/SeaLife.js` and `world/HermitCrabs.js` add original
-procedural manta rays, sea turtles, pink jellyfish and hermit crabs, with animated
+procedural pink jellyfish and hermit crabs, with animated
 native scene geometry. The refraction pass also includes flagged transparent
 underwater animals before the water samples its source. No external animal
 models or textures are used. The fishing game,
@@ -40,6 +40,14 @@ The SMAA area/search lookup images under `public/tidewater/textures/smaa/` are
 from three.js / the SMAA reference implementation, under MIT. References:
 [three.js license](https://github.com/mrdoob/three.js/blob/dev/LICENSE),
 [SMAA license](https://github.com/iryoku/smaa/blob/master/LICENSE.txt).
+
+## Mediabunny
+
+`mediabunny` 1.56.1 is loaded for browser video encoding and MP4 muxing. It is
+distributed unmodified under the Mozilla Public License 2.0. Source:
+[Mediabunny repository](https://github.com/Vanilagy/mediabunny),
+[versioned npm package](https://www.npmjs.com/package/mediabunny/v/1.56.1).
+The full license is retained in `public/tidewater/LICENSE-mediabunny.txt`.
 
 ## MIT License — Tidewater
 

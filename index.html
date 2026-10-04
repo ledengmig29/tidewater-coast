@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#163c46" />
-  <meta name="description" content="走近夏威夷海边木屋，观看浅滩里的魔鬼鱼、海龟、粉色水母，以及台阶旁爬动的寄居蟹。" />
+  <meta name="description" content="走近夏威夷海边木屋，观看粉色水母与寄居蟹，以及 30 秒内从日出到日落的海岸光影。" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23163c46'/%3E%3Cpath d='M5 15q5-7 11 0t11 0M5 22q5-7 11 0t11 0' fill='none' stroke='%23d4f5ef' stroke-width='2'/%3E%3C/svg%3E" />
   <title>海岸 · 潮汐之间</title>
 </head>
@@ -14,21 +14,26 @@
     <header class="coast-header">
       <div class="wordmark"><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M3 12q6-7 12 0t12 0M3 20q6-7 12 0t12 0"/></svg><h1>海岸</h1><span>潮汐之间</span></div>
       <div class="toolbar">
-        <button id="pause" type="button" class="tool" aria-label="暂停海浪与动物" aria-pressed="false" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path class="pause-symbol" d="M8 5v14M16 5v14"/><path class="play-symbol" d="m8 5 11 7-11 7Z"/></svg><span>暂停</span></button>
+        <button id="pause" type="button" class="tool" aria-label="暂停海浪、日光与动物" aria-pressed="false" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path class="pause-symbol" d="M8 5v14M16 5v14"/><path class="play-symbol" d="m8 5 11 7-11 7Z"/></svg><span>暂停</span></button>
+        <button id="export-video" type="button" class="tool" aria-label="导出日出到日落的 30 秒视频" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M4 16v5h16v-5"/></svg><span>导出 30s</span></button>
         <button id="settings-toggle" type="button" class="tool" aria-label="海岸设置" aria-expanded="false" aria-controls="settings" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16M8 4v6M16 14v6"/></svg><span>设置</span></button>
       </div>
     </header>
     <aside id="settings" class="settings" aria-label="海岸设置" hidden>
       <div class="panel-heading"><h2>光与海</h2><button id="settings-close" type="button" class="close" aria-label="关闭设置"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
-      <label for="daylight">时间 <output id="daylight-value" for="daylight">16:12</output></label>
-      <input id="daylight" type="range" min="6" max="18.6" step="0.05" value="16.2" />
-      <div class="range-captions" aria-hidden="true"><span>清晨</span><span>正午</span><span>日落</span></div>
+      <label for="daylight">时间 <output id="daylight-value" for="daylight">05:49</output></label>
+      <input id="daylight" type="range" min="5.82" max="18.18" step="any" value="5.82" />
+      <div class="range-captions" aria-hidden="true"><span>日出</span><span>正午</span><span>日落</span></div>
+      <div class="day-cycle"><span>日出至日落 · 30 秒</span><button id="replay-day" type="button" disabled>重播 30 秒</button></div>
       <label for="waves">浪势 <output id="waves-value" for="waves">1.0×</output></label>
       <input id="waves" type="range" min="0.4" max="1.5" step="0.1" value="1" />
       <label for="exposure">亮度 <output id="exposure-value" for="exposure">1.0×</output></label>
       <input id="exposure" type="range" min="0.3" max="0.95" step="0.05" value="0.55" />
       <label for="quality" class="select-row">画面精度<select id="quality"><option value="0.6">流畅</option><option value="0.8" selected>均衡</option><option value="1">精细</option></select></label>
       <button id="reset" type="button" class="reset">恢复初始海岸<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11a8 8 0 1 1 2 6M4 4v7h7"/></svg></button>
+      <p id="export-status" class="panel-note" role="status">视频：横屏 1080p · 30 fps · 无字幕与声音。<br />导出时请保持页面可见，完成后自动下载。</p>
+      <progress id="export-progress" max="1" value="0" aria-label="视频制作进度" hidden></progress>
+      <a id="export-download" class="credit" hidden>下载 30 秒 MP4 视频</a>
       <p class="panel-note">拖动看向四周，滚轮前后移动。<br />W A S D 移动，Q / E 下降与上升。</p>
       <a class="credit" href="https://github.com/dgreenheck/tidewater" target="_blank" rel="noopener noreferrer">基于 Tidewater 开源海岸<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 12 12 4M4 4h8v8"/></svg></a>
     </aside>

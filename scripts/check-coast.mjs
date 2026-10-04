@@ -212,10 +212,10 @@ const { createSeaLife } = await import('../src/tidewater/world/SeaLife.js');
 const { createHermitCrabs } = await import('../src/tidewater/world/HermitCrabs.js');
 const seaLife = createSeaLife(terrain), crabs = createHermitCrabs(terrain);
 const seaAnimals = seaLife.userData.seaLife.animals, crabAnimals = crabs.userData.crabs.animals;
-for (const [type, count] of [['manta-ray', 3], ['sea-turtle', 5], ['pink-jellyfish', 15]]) {
+for (const [type, count] of [['manta-ray', 0], ['sea-turtle', 0], ['pink-jellyfish', 15]]) {
   assert.equal(seaAnimals.filter(animal => animal.type === type).length, count, `Missing ${type}`);
 }
-assert.equal(seaAnimals.length, 23, 'Unexpected sea-life count');
+assert.equal(seaAnimals.length, 15, 'Unexpected sea-life count');
 assert.equal(crabAnimals.length, 10, 'There must be ten hermit crabs');
 assert.ok(crabAnimals.every(animal => animal.type === 'hermit-crab'));
 const seaGeometry = checkGeometry(seaLife, 'Sea life', 100);
@@ -313,12 +313,48 @@ assert.equal(refractionDraws[1].layerMask, 1 << 2);
 assert.equal(refractionDraws[1].clearColors, undefined, 'Transparent pass erases the seabed colour');
 assert.equal(refractionDraws[1].clearDepth, undefined, 'Transparent pass erases submerged depth');
 assert.ok(jellyMeshes.every(mesh => refractionDraws[1].filter(mesh)), 'Refraction filter rejects underwater jellyfish');
-assert.ok(seaMeshes.filter(mesh => !mesh.material.transparent).every(mesh => !refractionDraws[1].filter(mesh)), 'Opaque animals enter the transparent pass');
+assert.equal(refractionDraws[1].filter(timber), false, 'Opaque house geometry enters the transparent pass');
 const surfaceEffect = { ...jellyMeshes[0], material: { ...jellyMeshes[0].material, userData: {} } };
 assert.equal(refractionDraws[1].filter(surfaceEffect), false, 'Unflagged spray/effects enter underwater refraction');
 refraction.enabled = false;
 refraction.render(0);
 assert.ok(refractionDraws.slice(2).every(pass => pass.layerMask === 0), 'Disabled refraction still draws animals');
+
+const { DAY_DURATION, SUNRISE_HOUR, SUNSET_HOUR, daylightAt } = await import('../src/tidewater/DayCycle.js');
+const { CoastalApp } = await import('../src/tidewater/CoastalApp.js');
+const { sunDirectionFromTime } = await import('../src/tidewater/sky/Sky.js');
+const { VIDEO_FPS, VIDEO_FRAMES, VIDEO_SIZE } = await import('../src/tidewater/exportDayVideo.js');
+assert.equal(DAY_DURATION, 30);
+assert.equal(VIDEO_FRAMES / VIDEO_FPS, 30, 'Export timestamps do not span a thirty-second track');
+assert.deepEqual(VIDEO_SIZE, { width: 1920, height: 1080 });
+assert.ok(Math.abs(sunDirectionFromTime(SUNRISE_HOUR).y) < 1e-8 && Math.abs(sunDirectionFromTime(SUNSET_HOUR).y) < 1e-8, 'Day cycle misses the actual sun horizon crossings');
+assert.equal(daylightAt(-1), SUNRISE_HOUR);
+assert.equal(daylightAt(100), SUNSET_HOUR);
+for (let frame = 0, previous = -Infinity; frame < VIDEO_FRAMES; frame++) {
+  const hour = daylightAt(frame / (VIDEO_FRAMES - 1) * DAY_DURATION);
+  assert.ok(hour >= previous && sunDirectionFromTime(hour).y >= -1e-8, 'Video daylight goes backwards or skips into night');
+  previous = hour;
+}
+const cycle = new CoastalApp(null);
+cycle.updateSun = () => {}; // State transitions run unchanged; no GPU initialization.
+cycle.restartDayCycle();
+cycle.advanceDay(15);
+assert.ok(Math.abs(cycle.settings.timeOfDay - 12) < 1e-8, 'Fifteen seconds is not solar noon');
+cycle.paused = true;
+cycle.advanceDay(100);
+assert.equal(cycle.dayElapsed, 15, 'Pause does not freeze the day cycle');
+cycle.paused = false;
+cycle.advanceDay(20);
+assert.equal(cycle.dayElapsed, 30, 'A slow frame cannot finish the thirty-second cycle');
+assert.equal(cycle.settings.timeOfDay, SUNSET_HOUR);
+assert.equal(cycle.dayPlaying, false, 'Day cycle wraps after sunset');
+cycle.advanceDay(50);
+assert.equal(cycle.settings.timeOfDay, SUNSET_HOUR);
+cycle.settings.timeOfDay = 8;
+cycle.advanceDay(5);
+assert.equal(cycle.settings.timeOfDay, 8, 'Manual daylight selection is overwritten');
+cycle.restartDayCycle();
+assert.equal(cycle.settings.timeOfDay, SUNRISE_HOUR, 'Replay does not return to sunrise');
 
 // One-metre cells resolve the compact shore; a 64-cell global field misses it.
 const shore = computeShoreField({ size: 160, origin: -100, heightAt: (x, z) => terrain.heightAt(x, z) }, { res: 160 });
@@ -357,9 +393,11 @@ for (let j = 4; j < res - 4; j++) {
 console.log(JSON.stringify({ status: 'passed', modules: modules.size, localImports, assets: [...assets].sort(),
   terrainSamples, rasterDryAreaM2, beachAreaM2, houseFootprintM2, visibleSandM2, visibleSandRatio, maxTerrainHeight, maxShoreSlope,
   houseMeshes, houseVertices, gardenMeshes, gardenVertices, plants: plants.length,
-  seaLife: { counts: { mantaRays: 3, seaTurtles: 5, pinkJellyfish: 15 }, ...seaGeometry, highestSeaAnimalY, minSeaBedClearance },
+  seaLife: { counts: { mantaRays: 0, seaTurtles: 0, pinkJellyfish: 15 }, ...seaGeometry, highestSeaAnimalY, minSeaBedClearance },
   hermitCrabs: { count: crabAnimals.length, ...crabGeometry, minGroundClearance: minCrabGroundClearance },
   animalVertexSamples, submergedTransparency: 'passed',
+  dayCycle: { seconds: DAY_DURATION, sunriseHour: SUNRISE_HOUR, sunsetHour: SUNSET_HOUR,
+    videoFrames: VIDEO_FRAMES, fps: VIDEO_FPS, width: VIDEO_SIZE.width, height: VIDEO_SIZE.height },
   houseSizeMeters: { x: houseSize.x, y: houseSize.y, z: houseSize.z },
   shorelineCells: shore.res ** 2, shoreDirectionCells: 64,
   limitation: 'CPU and asset checks only; WebGPU rendering requires a compatible browser.' }, null, 2));

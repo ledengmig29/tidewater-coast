@@ -43,6 +43,7 @@ import { PostFX } from './post/PostFX.js';
 import { AirHaze } from './post/AirHaze.js';
 import { FlyCamera } from './player/FlyCamera.js';
 import { updateCameraVelocity, useStaticVelocity } from './post/CameraVelocity.js';
+import { DAY_DURATION, SUNRISE_HOUR, daylightAt } from './DayCycle.js';
 
 const up = new Vector3( 0, 1, 0 );
 const views = {
@@ -56,7 +57,9 @@ const views = {
 export class CoastalApp {
 	constructor( container ) {
 		this.container = container;
-		this.settings = { timeOfDay: 16.2, sunAzimuth: 45, timeSpeed: 0, exposure: 0.55, renderScale: 0.8, waveStrength: 1 };
+		this.settings = { timeOfDay: SUNRISE_HOUR, sunAzimuth: 45, exposure: 0.55, renderScale: 0.8, waveStrength: 1 };
+		this.dayElapsed = 0;
+		this.dayPlaying = false;
 		this.paused = false;
 		this.running = false;
 		this.fps = 0;
@@ -264,7 +267,26 @@ fn terrainWetness( xz: vec2f, h: f32 ) -> vec2f {
 		if ( this.running ) return;
 		this.running = true;
 		this.engine.clock.reset();
-		this.engine.start( dt => this.frame( dt ) );
+		let previous = performance.now();
+		this.engine.start( dt => {
+			const now = performance.now();
+			this.frame( dt, ( now - previous ) / 1000 );
+			previous = now;
+		} );
+	}
+
+	restartDayCycle() {
+		this.dayElapsed = 0;
+		this.dayPlaying = true;
+		this.settings.timeOfDay = SUNRISE_HOUR;
+		this.updateSun();
+	}
+
+	advanceDay( seconds ) {
+		if ( ! this.dayPlaying || this.paused ) return;
+		this.dayElapsed = Math.min( DAY_DURATION, this.dayElapsed + Math.max( 0, seconds ) );
+		this.settings.timeOfDay = daylightAt( this.dayElapsed );
+		if ( this.dayElapsed === DAY_DURATION ) this.dayPlaying = false;
 	}
 
 	stop() {
@@ -272,7 +294,7 @@ fn terrainWetness( xz: vec2f, h: f32 ) -> vec2f {
 		this.engine?.stop();
 	}
 
-	frame( elapsed ) {
+	frame( elapsed, dayDelta = elapsed ) {
 		const dt = this.paused ? 0 : Math.min( elapsed, 0.1 );
 		GPU.beginFrame();
 		FrameUniforms.fields.frameIndex.value = GPU.frame;
@@ -280,7 +302,7 @@ fn terrainWetness( xz: vec2f, h: f32 ) -> vec2f {
 		G.time.value += dt;
 		this.seaLife.update( G.time.value );
 		this.hermitCrabs.update( G.time.value );
-		this.settings.timeOfDay = ( this.settings.timeOfDay + dt * this.settings.timeSpeed + 24 ) % 24;
+		this.advanceDay( dayDelta );
 		this.fly.update( elapsed );
 		const wheel = this.input.consumeWheel();
 		if ( wheel ) this.camera.position.addScaledVector( this.camera.getWorldDirection( new Vector3() ), wheel * -1.4 );
@@ -324,6 +346,7 @@ fn terrainWetness( xz: vec2f, h: f32 ) -> vec2f {
 		this.post.render();
 		this.post.endFrame();
 		GPU.submit();
+		this.onFrame?.();
 		this.input.endFrame();
 		this._fpsTime = ( this._fpsTime || 0 ) + elapsed;
 		this._fpsFrames = ( this._fpsFrames || 0 ) + 1;
