@@ -126,14 +126,16 @@ export function createBeachGarden( terrainData ) {
 		const baseY = groundY - 0.035;
 		for ( let i = 0; i < 22; i ++ ) {
 			const a = i * 2.4 + rotation, r = 0.14 + 0.035 * ( i % 8 );
-			const base = new Vector3( x + Math.cos( a ) * r, baseY, z + Math.sin( a ) * r );
+			const bx = x + Math.cos( a ) * r, bz = z + Math.sin( a ) * r;
+			const base = new Vector3( bx, terrainData.heightAt( bx, bz ) - 0.035, bz );
 			const direction = new Vector3( Math.cos( a ), 0, Math.sin( a ) );
 			const h = 0.31 + i % 5 * 0.065;
 			ribbon( ( t ) => base.clone().addScaledVector( direction, 0.20 * t * t ).add( new Vector3( 0, h * t, 0 ) ), 0.016, leaves[ i % 3 ] );
 		}
 		for ( let i = 0; i < 7; i ++ ) {
 			const a = rotation + i * 2.4;
-			const start = new Vector3( x + 0.17 * Math.cos( a ), baseY, z + 0.17 * Math.sin( a ) );
+			const bx = x + 0.17 * Math.cos( a ), bz = z + 0.17 * Math.sin( a );
+			const start = new Vector3( bx, terrainData.heightAt( bx, bz ) - 0.035, bz );
 			const top = start.clone().add( new Vector3( Math.cos( a ) * 0.14, 0.45 + i % 3 * 0.09, Math.sin( a ) * 0.14 ) );
 			rod( start, top, 0.009 );
 			for ( const side of [ -1, 1 ] ) {
@@ -149,17 +151,33 @@ export function createBeachGarden( terrainData ) {
 		plants.push( { type: 'flowers-and-grass', x, z, groundY, baseY, radius: 0.62, height: 0.73 } );
 	}
 
-	// Keep all roots beside or behind the house, leaving the front stairs open.
+	// A loose layered border frames the house and front yard; the stairs stay open.
 	palm( 21.4, -79.8, 6.4, 0.65, 3.7 );
 	palm( 34.5, -79.9, 5.4, 0.50, -0.5 );
 	palm( 21.2, -73.0, 4.5, 0.80, 3.1 );
+	palm( 20.55, -68.4, 5.8, 1.25, 3.12 );
+	palm( 35.8, -67.8, 4.2, 1.4, 0.28 );
+	palm( 28.9, -81.9, 6.0, 0.95, -Math.PI / 2 );
 	cycad( 21.30, -76.0, 0.2, 0.85 );
 	cycad( 34.65, -76.0, 1.4, 0.90 );
 	cycad( 21.3, -70.6, 0.8, 0.78 );
 	cycad( 34.70, -70.7, 2.3, 0.84 );
+	cycad( 24.7, -80.95, 1.3, 0.60 );
+	cycad( 31.1, -81.0, 2.6, 0.63 );
+	cycad( 23.8, -66.7, 0.3, 0.67 );
+	cycad( 31.15, -66.55, 1.8, 0.62 );
 	flowerPatch( 22.10, -69.1, 0.4 );
 	flowerPatch( 34.40, -68.5, 1.7 );
 	flowerPatch( 32.70, -80.3, 2.1 );
+	flowerPatch( 20.6, -77.75, 1.1 );
+	flowerPatch( 20.35, -71.1, 2.5 );
+	flowerPatch( 22.0, -66.8, 0.8 );
+	flowerPatch( 24.0, -80.2, 1.9 );
+	flowerPatch( 28.0, -80.8, 0.5 );
+	flowerPatch( 35.4, -78.1, 2.8 );
+	flowerPatch( 35.8, -72.5, 1.4 );
+	flowerPatch( 34.3, -66.5, 0.2 );
+	flowerPatch( 30.6, -65.2, 2.2 );
 	for ( const [ material, parts ] of batches ) {
 		const merged = mergeGeometries( parts );
 		merged.computeBoundingBox();

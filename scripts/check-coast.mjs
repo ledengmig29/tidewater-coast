@@ -183,7 +183,7 @@ const { meshes: gardenMeshes, vertices: gardenVertices } = checkGeometry(garden,
 const plants = garden.userData.garden.plants;
 const trunkNormals = garden.children.find(mesh => mesh.name === 'garden-palm-bark')?.geometry.getAttribute('normal');
 assert.ok(trunkNormals?.getX(0) > 0, 'Palm trunk faces point inward');
-for (const [type, expected] of [['palm', 3], ['cycad', 4], ['flowers-and-grass', 3]]) {
+for (const [type, expected] of [['palm', 6], ['cycad', 8], ['flowers-and-grass', 12]]) {
   assert.equal(plants.filter(plant => plant.type === type).length, expected, `Garden silently omitted ${type}`);
 }
 for (const plant of plants) {
