@@ -69,23 +69,36 @@ const { computeShoreField } = await import('../src/tidewater/world/ShoreField.js
 const { Vector3 } = await import('../src/tidewater/engine/math/Vector3.js');
 const terrain = new TerrainData();
 assert.ok(terrain.heights.every(Number.isFinite), 'Terrain contains non-finite heights');
-assert.ok(terrain.heights.every(height => height <= 3.184001), 'Rear mountains remain in the beach terrain');
+assert.ok(terrain.heights.every(height => height <= 0.7), 'Beach terrain has become a high mound');
 assert.ok(terrain.sand.every(value => value === 255), 'Beach-only terrain lost sand cover');
 for (const mask of [terrain.rock, terrain.path, terrain.gully, terrain.scarp, terrain.seagrass, terrain.rubble]) {
   assert.ok(mask.every(value => value === 0), 'Beach-only terrain retains rock or vegetation cover');
 }
 // Only the house-sized island may remain above sea level anywhere in the map.
-const houseFootprintM2 = 10.8 * 8.5 + 11 * 3;
-let beachAreaM2 = 0;
+// Union of the two actual floor slabs: their 0.25 m overlap counts only once.
+const houseFootprintM2 = 10.8 * 8.5 + 11 * 3 - 10.8 * 0.25;
+let rasterDryAreaM2 = 0, maxTerrainHeight = -Infinity;
 for (let i = 0; i < terrain.heights.length; i++) {
   if (terrain.heights[i] <= 0) continue;
-  beachAreaM2 += terrain.texel ** 2;
+  rasterDryAreaM2 += terrain.texel ** 2;
+  maxTerrainHeight = Math.max(maxTerrainHeight, terrain.heights[i]);
   const x = terrain.origin + (i % terrain.res + 0.5) * terrain.texel;
   const z = terrain.origin + (Math.floor(i / terrain.res) + 0.5) * terrain.texel;
   assert.ok(Math.hypot(x - 28, z + 75) < 20, 'Land remains away from the house');
+  assert.ok(x > 13 && x < 43 && z > -89 && z < -57, 'Dry land is outside the continuous-area sampling bounds');
 }
-const beachToHouseRatio = beachAreaM2 / houseFootprintM2;
-assert.ok(Math.abs(beachToHouseRatio - 2) <= 0.2, 'Dry beach must be about twice the house and porch footprint');
+// The rendered sea-level boundary follows bilinear heightAt, rather than the
+// count of positive one-metre texels. Integrate that actual boundary at 0.125 m.
+let beachAreaM2 = 0;
+const areaStep = 0.125;
+for (let z = -90 + areaStep / 2; z < -56; z += areaStep) {
+  for (let x = 12 + areaStep / 2; x < 44; x += areaStep) {
+    if (terrain.heightAt(x, z) > 0) beachAreaM2 += areaStep ** 2;
+  }
+}
+const visibleSandM2 = beachAreaM2 - houseFootprintM2;
+const visibleSandRatio = visibleSandM2 / houseFootprintM2;
+assert.ok(Math.abs(visibleSandRatio - 2) <= 0.05, 'Exposed dry sand must be about twice the house and porch footprint');
 const bounds = terrain.boundsFor(3, -100, 53, -50);
 const normal = new Vector3();
 let dry = 0, submerged = 0, terrainSamples = 0;
@@ -99,6 +112,16 @@ for (let z = -100; z <= -50; z += 2.5) for (let x = 3; x <= 53; x += 2.5) {
   terrainSamples++;
 }
 assert.ok(dry > 0 && submerged > 0, 'The beach must meet the sea');
+// Measure the actual bilinear CPU surface, including its shallow-water join.
+// A low peak alone is insufficient if the shoreline still forms a steep wall.
+let maxShoreSlope = 0;
+for (let z = -90; z <= -58; z += 0.5) for (let x = 13; x <= 43; x += 0.5) {
+  if (terrain.heightAt(x, z) < -0.25) continue;
+  const dx = terrain.heightAt(x + 0.5, z) - terrain.heightAt(x - 0.5, z);
+  const dz = terrain.heightAt(x, z + 0.5) - terrain.heightAt(x, z - 0.5);
+  maxShoreSlope = Math.max(maxShoreSlope, Math.hypot(dx, dz));
+}
+assert.ok(maxShoreSlope <= 0.3, 'The low beach still has an excessively steep shoreline');
 
 // Build the same native geometry used by the viewer: malformed merged meshes
 // or a foundation off the dry sand should fail without starting a GPU/server.
@@ -165,7 +188,7 @@ for (const [type, expected] of [['palm', 3], ['cycad', 4], ['flowers-and-grass',
 }
 for (const plant of plants) {
   const ground = terrain.heightAt(plant.x, plant.z);
-  assert.ok(ground > 0.5 && Math.hypot(plant.x - houseData.site.x, plant.z - houseData.site.z) < 12, 'Plant is outside dry sand near the house');
+  assert.ok(ground > 0.05 && Math.hypot(plant.x - houseData.site.x, plant.z - houseData.site.z) < 12, 'Plant is outside dry sand near the house');
   assert.ok(!(Math.abs(plant.x - 27.4) < 1.8 + plant.radius && plant.z > -68), 'Garden blocks the front stairs');
   let rootAttached = false;
   for (const mesh of garden.children) {
@@ -218,7 +241,8 @@ for (let j = 4; j < res - 4; j++) {
 }
 
 console.log(JSON.stringify({ status: 'passed', modules: modules.size, localImports, assets: [...assets].sort(),
-  terrainSamples, beachAreaM2, beachToHouseRatio, houseMeshes, houseVertices, gardenMeshes, gardenVertices, plants: plants.length,
+  terrainSamples, rasterDryAreaM2, beachAreaM2, houseFootprintM2, visibleSandM2, visibleSandRatio, maxTerrainHeight, maxShoreSlope,
+  houseMeshes, houseVertices, gardenMeshes, gardenVertices, plants: plants.length,
   houseSizeMeters: { x: houseSize.x, y: houseSize.y, z: houseSize.z },
   shorelineCells: shore.res ** 2, shoreDirectionCells: 64,
   limitation: 'CPU and asset checks only; WebGPU rendering requires a compatible browser.' }, null, 2));

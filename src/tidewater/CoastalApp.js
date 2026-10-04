@@ -47,7 +47,7 @@ const views = {
 	shore: { p: [ 48, 4.4, -47 ], yaw: 0.94, pitch: 0.035, portrait: { p: [ 54, 5.2, -39 ], yaw: 0.63, pitch: 0.04 } },
 	home: { p: [ 41, 4.7, -59 ], yaw: 0.68, pitch: 0.1, portrait: { p: [ 44, 4.7, -46 ], yaw: 0.53, pitch: 0.065 } },
 	overview: { p: [ 49, 21, -43 ], yaw: 0.61, pitch: -0.46 },
-	waterline: { p: [ 27, 0.26, -56 ], yaw: -0.04, pitch: 0.055 },
+	waterline: { p: [ 27, 0.26, -56 ], yaw: -0.04, pitch: 0.055, portrait: { p: [ 28, 0.26, -35 ], yaw: 0, pitch: 0.055 } },
 };
 
 export class CoastalApp {

@@ -79,7 +79,7 @@ export function createBeachGarden( terrainData ) {
 	}
 	function palm( x, z, height, lean, angle ) {
 		const groundY = terrainData.heightAt( x, z );
-		if ( groundY < 1.2 ) return;
+		if ( groundY < 0.15 ) return;
 		const baseY = groundY - 0.06;
 		const path = ( t ) => new Vector3( x + Math.cos( angle ) * lean * t * t, baseY + height * t, z + Math.sin( angle ) * lean * t * t );
 		const p = [], uv = [], index = [];
@@ -112,7 +112,7 @@ export function createBeachGarden( terrainData ) {
 	}
 	function cycad( x, z, rotation, size ) {
 		const groundY = terrainData.heightAt( x, z );
-		if ( groundY < 1.2 ) return;
+		if ( groundY < 0.15 ) return;
 		const baseY = groundY - 0.06;
 		sphere( new Vector3( x, baseY + 0.28 * size, z ), [ 0.23 * size, 0.33 * size, 0.23 * size ], bark );
 		const crown = new Vector3( x, baseY + 0.56 * size, z );
@@ -122,7 +122,7 @@ export function createBeachGarden( terrainData ) {
 	}
 	function flowerPatch( x, z, rotation ) {
 		const groundY = terrainData.heightAt( x, z );
-		if ( groundY < 1.2 ) return;
+		if ( groundY < 0.15 ) return;
 		const baseY = groundY - 0.035;
 		for ( let i = 0; i < 22; i ++ ) {
 			const a = i * 2.4 + rotation, r = 0.14 + 0.035 * ( i % 8 );

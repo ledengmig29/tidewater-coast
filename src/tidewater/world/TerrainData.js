@@ -411,21 +411,21 @@ export class TerrainData {
 
 		tick( 'border' );
 
-		// A 16 m rounded square is about 250 m²: twice the 124.8 m² house/lanai
-		// floorplan. Keep its dry core under the home and slope into the same ocean.
+		// Exposed sand, excluding the house/lanai footprint, is about twice that
+		// footprint. A low flat core and a broad shore avoid an elevated sand mound.
 		for ( let j = 0; j < res; j ++ ) {
 
 			const z = origin + ( j + 0.5 ) * this.texel;
 			for ( let i = 0; i < res; i ++ ) {
 
 				const x = origin + ( i + 0.5 ) * this.texel;
-				const qx = Math.abs( x - 28 ) - 5.3;
-				const qz = Math.abs( z + 73.4 ) - 5.3;
+				const qx = Math.abs( x - 28 ) - 7.06;
+				const qz = Math.abs( z + 73.4 ) - 7.06;
 				const distance = Math.hypot( Math.max( qx, 0 ), Math.max( qz, 0 ) ) + Math.min( Math.max( qx, qz ), 0 ) - 2.7;
 				const inland = Math.max( 0, - distance );
 				const offshore = Math.max( 0, distance );
 				H[ j * res + i ] = distance < 0
-					? 2.7 * smoothstep( 0, 2.1, inland ) + 0.035 * Math.sin( x * 0.7 ) * Math.sin( z * 0.4 ) * smoothstep( 0.6, 2.1, inland )
+					? 0.6 * smoothstep( 0, 3.5, inland ) + 0.008 * Math.sin( x * 0.7 ) * Math.sin( z * 0.4 ) * smoothstep( 0.6, 3.5, inland )
 					: - Math.min( 90, offshore * 0.12 + offshore * offshore * 0.003 );
 
 			}

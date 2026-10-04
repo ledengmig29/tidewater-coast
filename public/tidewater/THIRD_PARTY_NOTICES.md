@@ -11,8 +11,12 @@ reproduced below and in `src/tidewater/LICENSE`.
 
 The original ocean FFT, shore waves, breaking waves, spray, swash simulation,
 sand shading, terrain, atmosphere and postprocessing are
-retained. The terrain is adapted to a compact low sand island around the house,
-about twice the house and lanai floor area; mountains, scattered rocks and the
+retained. The terrain is adapted to a compact, flat sand island near sea level,
+with a gentle shore slope and maximum sand height of about 0.61 m. Dry land
+measures about 368.44 m²; exposed dry sand outside the 122.1 m² house-and-lanai
+projected union measures about 246.34 m², a ratio of 2.018. Overlap is counted
+once and sand under the building is excluded from the exposed-sand metric.
+Mountains, scattered rocks and the
 upstream procedural vegetation are removed from the active viewer. `CoastalApp.js`
 assembles these into an environment viewer. The input
 module was adapted for pointer/touch dragging and keyboard accessibility. Cloud
