@@ -18,6 +18,8 @@ import { TerrainGPU } from './world/TerrainGPU.js';
 import { Terrain } from './world/Terrain.js';
 import { createBeachHouse } from './world/BeachHouse.js';
 import { createBeachGarden } from './world/BeachGarden.js';
+import { createSeaLife } from './world/SeaLife.js';
+import { createHermitCrabs } from './world/HermitCrabs.js';
 import { computeShoreField } from './world/ShoreField.js';
 import { WORLD } from './world/WorldLayout.js';
 import { OceanFFT } from './ocean/OceanFFT.js';
@@ -46,6 +48,7 @@ const up = new Vector3( 0, 1, 0 );
 const views = {
 	shore: { p: [ 48, 4.4, -47 ], yaw: 0.94, pitch: 0.035, portrait: { p: [ 54, 5.2, -39 ], yaw: 0.63, pitch: 0.04 } },
 	home: { p: [ 41, 4.7, -59 ], yaw: 0.68, pitch: 0.1, portrait: { p: [ 44, 4.7, -46 ], yaw: 0.53, pitch: 0.065 } },
+	shallows: { p: [ 28, 3.6, -38 ], yaw: 0, pitch: -0.23, portrait: { p: [ 63, 6, -41 ], yaw: 1.11, pitch: -0.18 } },
 	overview: { p: [ 49, 21, -43 ], yaw: 0.61, pitch: -0.46 },
 	waterline: { p: [ 27, 0.26, -56 ], yaw: -0.04, pitch: 0.055, portrait: { p: [ 28, 0.26, -35 ], yaw: 0, pitch: 0.055 } },
 };
@@ -74,7 +77,7 @@ export class CoastalApp {
 		this.camera = camera;
 		camera.near = 0.1;
 		camera.updateProjectionMatrix();
-		engine.domElement.setAttribute( 'aria-label', '海岸与夏威夷木屋三维场景：拖动查看，WASD 移动，Q E 升降' );
+		engine.domElement.setAttribute( 'aria-label', '海岸、夏威夷木屋与浅海动物三维场景：拖动查看，WASD 移动，Q E 升降' );
 		this.input = new Input( engine.domElement );
 		this.fly = new FlyCamera( camera, engine.domElement, this.input );
 		this.fly.speed = 5;
@@ -103,6 +106,10 @@ export class CoastalApp {
 		this.beachGarden = createBeachGarden( this.terrainData );
 		scene.add( this.beachGarden );
 		useStaticVelocity( this.beachGarden );
+		await progress( 0.26, '布置浅海动物与楼梯下的寄居蟹' );
+		this.seaLife = createSeaLife( this.terrainData );
+		this.hermitCrabs = createHermitCrabs( this.terrainData );
+		scene.add( this.seaLife, this.hermitCrabs );
 
 		await progress( 0.27, '模拟海浪、碎浪与泡沫' );
 		this.fft = new OceanFFT( renderer );
@@ -271,6 +278,8 @@ fn terrainWetness( xz: vec2f, h: f32 ) -> vec2f {
 		FrameUniforms.fields.frameIndex.value = GPU.frame;
 		G.dt.value = dt;
 		G.time.value += dt;
+		this.seaLife.update( G.time.value );
+		this.hermitCrabs.update( G.time.value );
 		this.settings.timeOfDay = ( this.settings.timeOfDay + dt * this.settings.timeSpeed + 24 ) % 24;
 		this.fly.update( elapsed );
 		const wheel = this.input.consumeWheel();

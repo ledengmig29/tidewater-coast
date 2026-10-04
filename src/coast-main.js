@@ -12,7 +12,7 @@ function announce(text) { $('status').textContent = text; }
 
 function syncPause() {
   $('pause').setAttribute('aria-pressed', String(app.paused));
-  $('pause').setAttribute('aria-label', app.paused ? '继续海浪' : '暂停海浪');
+  $('pause').setAttribute('aria-label', app.paused ? '继续海浪与动物' : '暂停海浪与动物');
   $('pause').querySelector('span').textContent = app.paused ? '继续' : '暂停';
 }
 
@@ -37,7 +37,7 @@ function selectView(name) {
   for (const button of document.querySelectorAll('[data-view]')) {
     button.setAttribute('aria-pressed', String(button.dataset.view === name));
   }
-  announce(`已切换到${{ shore: '岸边', home: '木屋', overview: '俯瞰', waterline: '水线' }[name]}视角`);
+  announce(`已切换到${{ shore: '岸边', home: '木屋', shallows: '浅滩', overview: '俯瞰', waterline: '水线' }[name]}视角`);
 }
 
 function fail(error) {
@@ -59,7 +59,7 @@ $('settings-close').addEventListener('click', () => setSettings(false));
 $('pause').addEventListener('click', () => {
   app.paused = !app.paused;
   syncPause();
-  announce(app.paused ? '海浪已暂停，仍可改变视角和光照' : '海浪继续');
+  announce(app.paused ? '海浪与动物已暂停，仍可改变视角和光照' : '海浪与动物继续');
 });
 $('daylight').addEventListener('input', updateTime);
 $('waves').addEventListener('input', () => {
@@ -119,7 +119,7 @@ try {
   controls.forEach((button) => { button.disabled = false; });
   $('loading').classList.add('is-ready');
   setTimeout(() => { $('loading').hidden = true; }, reducedMotion.matches ? 0 : 450);
-  announce(reducedMotion.matches ? '海岸已就绪。已根据减少动态偏好暂停海浪。' : '海岸已就绪。拖动环顾，或选择观看位置。');
+  announce(reducedMotion.matches ? '海岸已就绪。已根据减少动态偏好暂停海浪与动物。' : '海岸已就绪。拖动环顾，或选择观看位置。');
 } catch (error) {
   fail(error);
 }

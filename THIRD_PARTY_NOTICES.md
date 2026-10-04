@@ -24,7 +24,11 @@ and SMAA asset paths were relocated to `public/tidewater/`. `TerrainGPU` retains
 the shore field on the CPU so the existing wave-direction cache can be built.
 `world/BeachHouse.js` and `world/BeachGarden.js` add original procedural house,
 porch, palm, cycad and flower geometry; these are not upstream assets or
-character models. The fishing game,
+character models. `world/SeaLife.js` and `world/HermitCrabs.js` add original
+procedural manta rays, sea turtles, pink jellyfish and hermit crabs, with animated
+native scene geometry. The refraction pass also includes flagged transparent
+underwater animals before the water samples its source. No external animal
+models or textures are used. The fishing game,
 vendors, characters, boat, village, sound system and scanned models are omitted.
 
 The cloud noise files under `public/tidewater/clouds/` come from the same source.

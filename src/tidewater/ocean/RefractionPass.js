@@ -73,6 +73,10 @@ export class RefractionPass {
 			return _box.copy( this._localBox( o ) ).applyMatrix4( o.matrixWorld ).min.y < this._clipY;
 
 		};
+		// Only translucent sea-life belongs in this source; surface spray and
+		// other transparent effects keep their existing late scene pass.
+		this._transparentFilter = ( o ) => o.material.transparent
+			&& o.material.userData.refractUnderwater === true && this._filter( o );
 
 		// local bounds of the part of the geometry an object draws (merged batches like the village draw
 		// ranges of one shared geometry: the whole geometry's bounds would include the pier piles)
@@ -165,6 +169,16 @@ export class RefractionPass {
 			layerMask: this.enabled ? 1 << LAYERS.OPAQUE : 0,
 			filter: this._filter,
 			defines: this._defines,
+		} );
+		// Load the submerged opaque colour/depth and blend jellyfish over it
+		// before the water samples this target for refraction.
+		this.meshRenderer.render( this.scene, {
+			label: 'submerged transparency', kind: 'color', late: true,
+			camera: cam, frameBlock: this.block,
+			colorViews: [ rt.texture.view() ], colorFormats: rt.formats,
+			depthView: rt.depthTexture.view(), depthFormat: DEPTH_FORMAT,
+			layerMask: this.enabled ? 1 << LAYERS.TRANSPARENT : 0,
+			filter: this._transparentFilter, defines: this._defines,
 		} );
 
 	}

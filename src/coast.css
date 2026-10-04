@@ -85,7 +85,7 @@ progress::-moz-progress-bar { background: var(--accent); }
   .tool { min-width: 44px; padding: 0 10px; }
   .tool > span { display: none; }
   .coast-footer { align-items: flex-start; flex-direction: column; gap: 10px; bottom: max(20px, env(safe-area-inset-bottom)); }
-  .view-switcher { max-width: 100%; }
+  .view-switcher { max-width: 100%; flex-wrap: wrap; }
   .view-switcher button { padding: 0 14px; min-width: 64px; }
   .interaction-hint { font-size: 11px; padding: 6px 9px; }
   .settings { width: min(304px, calc(100vw - 40px)); top: 78px; max-height: calc(100svh - 214px); padding: 18px 22px; }

@@ -206,6 +206,120 @@ for (const plant of plants) {
   assert.ok(rootAttached, 'Garden geometry does not reach its planting ground');
 }
 
+// Exercise the actual moving geometry, rather than just its orbit centres:
+// a fin, jellyfish tentacle or crab leg must not intersect the sand or stairs.
+const { createSeaLife } = await import('../src/tidewater/world/SeaLife.js');
+const { createHermitCrabs } = await import('../src/tidewater/world/HermitCrabs.js');
+const seaLife = createSeaLife(terrain), crabs = createHermitCrabs(terrain);
+const seaAnimals = seaLife.userData.seaLife.animals, crabAnimals = crabs.userData.crabs.animals;
+for (const [type, count] of [['manta-ray', 3], ['sea-turtle', 5], ['pink-jellyfish', 15]]) {
+  assert.equal(seaAnimals.filter(animal => animal.type === type).length, count, `Missing ${type}`);
+}
+assert.equal(seaAnimals.length, 23, 'Unexpected sea-life count');
+assert.equal(crabAnimals.length, 10, 'There must be ten hermit crabs');
+assert.ok(crabAnimals.every(animal => animal.type === 'hermit-crab'));
+const seaGeometry = checkGeometry(seaLife, 'Sea life', 100);
+const crabGeometry = checkGeometry(crabs, 'Hermit crabs', 80);
+assert.ok(seaGeometry.vertices < 150000 && crabGeometry.vertices < 50000, 'Animal geometry exceeds its budget');
+const seaMeshes = [], crabMeshes = [];
+for (const [group, meshes] of [[seaLife, seaMeshes], [crabs, crabMeshes]]) {
+  group.traverse(object => {
+    if (!object.isMesh) return;
+    meshes.push(object);
+    assert.notEqual(object.staticVelocity, true, 'Moving animal suppresses its motion vectors');
+    const normals = object.geometry.getAttribute('normal');
+    for (let i = 0; i < normals.count; i++) {
+      assert.ok(Math.hypot(normals.getX(i), normals.getY(i), normals.getZ(i)) > 0.5, 'Animal has a degenerate lighting normal');
+    }
+  });
+  const snapshot = () => {
+    const pose = [];
+    group.traverse(object => pose.push(...object.matrixWorld.elements));
+    return pose;
+  };
+  group.update(0);
+  const initial = snapshot();
+  group.update(1);
+  const moving = snapshot();
+  assert.notDeepEqual(moving, initial, 'Animals do not animate');
+  group.update(1);
+  assert.deepEqual(snapshot(), moving, 'Paused simulation time changes animal poses');
+  group.update(88);
+  group.update(1);
+  assert.deepEqual(snapshot(), moving, 'Animal animation depends on update history');
+  group.update(0);
+  assert.deepEqual(snapshot(), initial, 'Animal animation cannot return to its initial pose');
+}
+const jellyMeshes = seaMeshes.filter(mesh => mesh.material.transparent);
+assert.equal(jellyMeshes.length, 45, 'Jellyfish lost their bell, arms or tentacles');
+for (const mesh of jellyMeshes) {
+  assert.equal(mesh.layers.mask, 1 << 2, 'Jellyfish is absent from the transparent pass');
+  assert.ok(mesh.material.opacity > 0 && mesh.material.opacity < 1, 'Jellyfish must be translucent');
+  assert.equal(mesh.material.depthWrite, false, 'Transparent jellyfish blocks later underwater geometry');
+  assert.equal(mesh.material.userData.refractUnderwater, true, 'Jellyfish is absent from the water refraction source');
+  assert.notEqual(mesh.material.underwaterLighting, 'none', 'Jellyfish bypasses underwater lighting');
+}
+let animalVertexSamples = 0, highestSeaAnimalY = -Infinity, minSeaBedClearance = Infinity, minCrabGroundClearance = Infinity;
+for (const time of [0, 1, 5, 10, 30, 60, 120, 180, 240, 300]) {
+  seaLife.update(time);
+  crabs.update(time);
+  for (const mesh of seaMeshes) {
+    const position = mesh.geometry.getAttribute('position');
+    for (let i = 0; i < position.count; i++) {
+      housePoint.fromBufferAttribute(position, i).applyMatrix4(mesh.matrixWorld);
+      const clearance = housePoint.y - terrain.heightAt(housePoint.x, housePoint.z);
+      highestSeaAnimalY = Math.max(highestSeaAnimalY, housePoint.y);
+      minSeaBedClearance = Math.min(minSeaBedClearance, clearance);
+      assert.ok(housePoint.y < -0.1 && clearance > 0.08, 'Sea animal crosses mean water level or the seabed');
+      animalVertexSamples++;
+    }
+  }
+  for (const animal of crabAnimals) {
+    assert.ok(terrain.heightAt(animal.root.position.x, animal.root.position.z) > 0.15, 'Crab walks into the sea');
+    assert.ok(Math.hypot(animal.root.position.x - 27.4, animal.root.position.z + 67) < 6, 'Crab strays away from the stairs');
+  }
+  for (const mesh of crabMeshes) {
+    const position = mesh.geometry.getAttribute('position');
+    for (let i = 0; i < position.count; i++) {
+      housePoint.fromBufferAttribute(position, i).applyMatrix4(mesh.matrixWorld);
+      const clearance = housePoint.y - terrain.heightAt(housePoint.x, housePoint.z);
+      minCrabGroundClearance = Math.min(minCrabGroundClearance, clearance);
+      assert.ok(clearance > -0.005, 'Crab sinks into the sand');
+      assert.ok(!houseData.stairs.some(stair => Math.abs(housePoint.x - stair.x) < 1.53
+        && Math.abs(housePoint.z - stair.z) < 0.16 && housePoint.y > stair.bottomY && housePoint.y < stair.topY + 0.035), 'Crab intersects a solid wooden stair');
+      animalVertexSamples++;
+    }
+  }
+}
+
+// The water previously captured only opaque geometry. Verify the new flagged
+// transparent draw loads its colour/depth, so jellyfish survive refraction.
+const { RefractionPass } = await import('../src/tidewater/ocean/RefractionPass.js');
+const { PerspectiveCamera } = await import('../src/tidewater/engine/scene/Camera.js');
+const { setFrameCamera } = await import('../src/tidewater/engine/render/Frame.js');
+const refractionDraws = [];
+const refractionCamera = new PerspectiveCamera(62, 16 / 9, 0.06, 60000);
+setFrameCamera(refractionCamera, 1280, 720);
+const refraction = new RefractionPass({ scene: seaLife, camera: refractionCamera,
+  sceneRenderer: { width: 1280, height: 720 }, meshRenderer: { render(scene, pass) { refractionDraws.push(pass); } } });
+// Keep GPU allocation out of this CPU test; the real pass and filters run unchanged.
+refraction.target = { width: 0, height: 0, formats: ['rgba16float'],
+  setSize(width, height) { this.width = width; this.height = height; },
+  texture: { view() { return 'colour'; } }, depthTexture: { view() { return 'depth'; } } };
+refraction.render(0);
+assert.equal(refractionDraws.length, 2, 'Submerged transparency was not rendered');
+assert.equal(refractionDraws[0].layerMask, 1 << 0);
+assert.equal(refractionDraws[1].layerMask, 1 << 2);
+assert.equal(refractionDraws[1].clearColors, undefined, 'Transparent pass erases the seabed colour');
+assert.equal(refractionDraws[1].clearDepth, undefined, 'Transparent pass erases submerged depth');
+assert.ok(jellyMeshes.every(mesh => refractionDraws[1].filter(mesh)), 'Refraction filter rejects underwater jellyfish');
+assert.ok(seaMeshes.filter(mesh => !mesh.material.transparent).every(mesh => !refractionDraws[1].filter(mesh)), 'Opaque animals enter the transparent pass');
+const surfaceEffect = { ...jellyMeshes[0], material: { ...jellyMeshes[0].material, userData: {} } };
+assert.equal(refractionDraws[1].filter(surfaceEffect), false, 'Unflagged spray/effects enter underwater refraction');
+refraction.enabled = false;
+refraction.render(0);
+assert.ok(refractionDraws.slice(2).every(pass => pass.layerMask === 0), 'Disabled refraction still draws animals');
+
 // One-metre cells resolve the compact shore; a 64-cell global field misses it.
 const shore = computeShoreField({ size: 160, origin: -100, heightAt: (x, z) => terrain.heightAt(x, z) }, { res: 160 });
 assert.equal(shore.data.length, shore.res * shore.res * 4);
@@ -243,6 +357,9 @@ for (let j = 4; j < res - 4; j++) {
 console.log(JSON.stringify({ status: 'passed', modules: modules.size, localImports, assets: [...assets].sort(),
   terrainSamples, rasterDryAreaM2, beachAreaM2, houseFootprintM2, visibleSandM2, visibleSandRatio, maxTerrainHeight, maxShoreSlope,
   houseMeshes, houseVertices, gardenMeshes, gardenVertices, plants: plants.length,
+  seaLife: { counts: { mantaRays: 3, seaTurtles: 5, pinkJellyfish: 15 }, ...seaGeometry, highestSeaAnimalY, minSeaBedClearance },
+  hermitCrabs: { count: crabAnimals.length, ...crabGeometry, minGroundClearance: minCrabGroundClearance },
+  animalVertexSamples, submergedTransparency: 'passed',
   houseSizeMeters: { x: houseSize.x, y: houseSize.y, z: houseSize.z },
   shorelineCells: shore.res ** 2, shoreDirectionCells: 64,
   limitation: 'CPU and asset checks only; WebGPU rendering requires a compatible browser.' }, null, 2));

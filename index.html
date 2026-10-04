@@ -4,17 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#163c46" />
-  <meta name="description" content="走近夏威夷海边木屋。看海浪涌起、白沫冲上沙滩，日光照进蓝绿木屋与露台。" />
+  <meta name="description" content="走近夏威夷海边木屋，观看浅滩里的魔鬼鱼、海龟、粉色水母，以及台阶旁爬动的寄居蟹。" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23163c46'/%3E%3Cpath d='M5 15q5-7 11 0t11 0M5 22q5-7 11 0t11 0' fill='none' stroke='%23d4f5ef' stroke-width='2'/%3E%3C/svg%3E" />
   <title>海岸 · 潮汐之间</title>
 </head>
 <body>
   <main id="coast" aria-label="交互海岸">
-    <div id="scene" aria-label="实时海浪、沙滩与夏威夷木屋。拖动改变视线，WASD 移动。"></div>
+    <div id="scene" aria-label="实时海浪、沙滩、夏威夷木屋与浅海动物。拖动改变视线，WASD 移动。"></div>
     <header class="coast-header">
       <div class="wordmark"><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M3 12q6-7 12 0t12 0M3 20q6-7 12 0t12 0"/></svg><h1>海岸</h1><span>潮汐之间</span></div>
       <div class="toolbar">
-        <button id="pause" type="button" class="tool" aria-label="暂停海浪" aria-pressed="false" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path class="pause-symbol" d="M8 5v14M16 5v14"/><path class="play-symbol" d="m8 5 11 7-11 7Z"/></svg><span>暂停</span></button>
+        <button id="pause" type="button" class="tool" aria-label="暂停海浪与动物" aria-pressed="false" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path class="pause-symbol" d="M8 5v14M16 5v14"/><path class="play-symbol" d="m8 5 11 7-11 7Z"/></svg><span>暂停</span></button>
         <button id="settings-toggle" type="button" class="tool" aria-label="海岸设置" aria-expanded="false" aria-controls="settings" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16M8 4v6M16 14v6"/></svg><span>设置</span></button>
       </div>
     </header>
@@ -33,7 +33,7 @@
       <a class="credit" href="https://github.com/dgreenheck/tidewater" target="_blank" rel="noopener noreferrer">基于 Tidewater 开源海岸<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 12 12 4M4 4h8v8"/></svg></a>
     </aside>
     <footer class="coast-footer">
-      <div class="view-switcher" role="group" aria-label="选择观看位置"><button type="button" data-view="shore" aria-pressed="true" disabled>岸边</button><button type="button" data-view="home" aria-pressed="false" disabled>木屋</button><button type="button" data-view="overview" aria-pressed="false" disabled>俯瞰</button><button type="button" data-view="waterline" aria-pressed="false" disabled>水线</button></div>
+      <div class="view-switcher" role="group" aria-label="选择观看位置"><button type="button" data-view="shore" aria-pressed="true" disabled>岸边</button><button type="button" data-view="home" aria-pressed="false" disabled>木屋</button><button type="button" data-view="shallows" aria-pressed="false" disabled>浅滩</button><button type="button" data-view="overview" aria-pressed="false" disabled>俯瞰</button><button type="button" data-view="waterline" aria-pressed="false" disabled>水线</button></div>
       <p class="interaction-hint"><svg viewBox="0 0 20 24" aria-hidden="true"><rect x="4" y="2" width="12" height="19" rx="6"/><path d="M10 2v7"/></svg><span class="desktop-hint">拖动环顾 · 滚轮移动</span><span class="touch-hint">滑动环顾 · 点选视角</span></p>
     </footer>
     <section id="loading" class="loading" aria-labelledby="loading-title"><div class="loading-content"><svg class="loading-mark" viewBox="0 0 48 48" aria-hidden="true"><path d="M5 19q9-11 19 0t19 0M5 32q9-11 19 0t19 0"/></svg><h2 id="loading-title">海浪正在靠岸</h2><p id="load-stage" role="status">准备海岸场景…</p><progress id="load-progress" max="1" value="0" aria-label="海岸加载进度"></progress><div class="loading-meta"><span>首次加载需要编译海面与光照</span><output id="load-percent">0%</output></div></div></section>
