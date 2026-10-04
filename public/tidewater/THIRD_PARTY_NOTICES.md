@@ -2,7 +2,7 @@
 
 ## Tidewater coastal rendering
 
-The modules under `src/tidewater/` are extracted or adapted from
+The rendering modules under `src/tidewater/` are extracted or adapted from
 [dgreenheck/tidewater](https://github.com/dgreenheck/tidewater), commit
 `4811ba48d795197de5621985f404e765c0b7c0ef`.
 
@@ -18,7 +18,8 @@ assembles these into an environment viewer. The input
 module was adapted for pointer/touch dragging and keyboard accessibility. Cloud
 and SMAA asset paths were relocated to `public/tidewater/`. `TerrainGPU` retains
 the shore field on the CPU so the existing wave-direction cache can be built.
-The fishing game,
+`world/BeachHouse.js` adds original procedural house and porch geometry to this
+viewer; it is not an upstream asset or a character model. The fishing game,
 vendors, characters, boat, village, sound system and scanned models are omitted.
 
 The cloud noise files under `public/tidewater/clouds/` come from the same source.

@@ -16,6 +16,7 @@ import { Environment } from './sky/Environment.js';
 import { TerrainData } from './world/TerrainData.js';
 import { TerrainGPU } from './world/TerrainGPU.js';
 import { Terrain } from './world/Terrain.js';
+import { createBeachHouse } from './world/BeachHouse.js';
 import { computeShoreField } from './world/ShoreField.js';
 import { WORLD } from './world/WorldLayout.js';
 import { OceanFFT } from './ocean/OceanFFT.js';
@@ -42,15 +43,16 @@ import { updateCameraVelocity, useStaticVelocity } from './post/CameraVelocity.j
 
 const up = new Vector3( 0, 1, 0 );
 const views = {
-	shore: { p: [ 70, 3.1, -52 ], yaw: 2.18, pitch: -0.12 },
-	overview: { p: [ 60, 72, 125 ], yaw: Math.PI * 0.08, pitch: -0.49 },
+	shore: { p: [ 48, 4.4, -47 ], yaw: 0.94, pitch: 0.035, portrait: { p: [ 48, 4.4, -47 ], yaw: 0.63, pitch: 0.07 } },
+	home: { p: [ 41, 4.7, -59 ], yaw: 0.68, pitch: 0.1, portrait: { p: [ 44, 4.7, -46 ], yaw: 0.53, pitch: 0.065 } },
+	overview: { p: [ 72, 38, -7 ], yaw: 0.6, pitch: -0.43 },
 	waterline: { p: [ 12, 0.26, -16 ], yaw: 1.98, pitch: -0.02 },
 };
 
 export class CoastalApp {
 	constructor( container ) {
 		this.container = container;
-		this.settings = { timeOfDay: 16.2, sunAzimuth: 0, timeSpeed: 0, exposure: 0.55, renderScale: 0.8, waveStrength: 1 };
+		this.settings = { timeOfDay: 16.2, sunAzimuth: 45, timeSpeed: 0, exposure: 0.55, renderScale: 0.8, waveStrength: 1 };
 		this.paused = false;
 		this.running = false;
 		this.fps = 0;
@@ -71,7 +73,7 @@ export class CoastalApp {
 		this.camera = camera;
 		camera.near = 0.1;
 		camera.updateProjectionMatrix();
-		engine.domElement.setAttribute( 'aria-label', '海岸三维场景：拖动查看，WASD 移动，Q E 升降' );
+		engine.domElement.setAttribute( 'aria-label', '海岸与夏威夷木屋三维场景：拖动查看，WASD 移动，Q E 升降' );
 		this.input = new Input( engine.domElement );
 		this.fly = new FlyCamera( camera, engine.domElement, this.input );
 		this.fly.speed = 5;
@@ -93,6 +95,10 @@ export class CoastalApp {
 		this.terrainGPU = new TerrainGPU( this.terrainData, this.shoreField );
 		this.terrain = new Terrain( { scene, terrainData: this.terrainData, terrainGPU: this.terrainGPU, renderer } );
 		this.terrain.mesh.material.appliesHillShadow = true;
+		await progress( 0.24, '搭建海边木屋与露台' );
+		this.beachHouse = createBeachHouse( this.terrainData );
+		scene.add( this.beachHouse );
+		useStaticVelocity( this.beachHouse );
 
 		await progress( 0.27, '模拟海浪、碎浪与泡沫' );
 		this.fft = new OceanFFT( renderer );
@@ -192,8 +198,9 @@ fn terrainWetness( xz: vec2f, h: f32 ) -> vec2f {
 	}
 
 	setView( name ) {
-		const view = views[ name ];
-		if ( ! view ) return false;
+		const preset = views[ name ];
+		if ( ! preset ) return false;
+		const view = this.camera.aspect < 1 && preset.portrait ? preset.portrait : preset;
 		this.view = name;
 		const position = new Vector3( ...view.p );
 		if ( name === 'shore' && this.terrainData ) position.y = Math.max( position.y, this.terrainData.heightAt( position.x, position.z ) + 1.7 );

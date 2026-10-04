@@ -99,6 +99,48 @@ for (let z = -140; z <= 120; z += 10) for (let x = -160; x <= 160; x += 10) {
 }
 assert.ok(dry > 0 && submerged > 0, 'The beach must meet the sea');
 
+// Build the same native geometry used by the viewer: malformed merged meshes
+// or a foundation off the dry sand should fail without starting a GPU/server.
+const { createBeachHouse } = await import('../src/tidewater/world/BeachHouse.js');
+const { Box3 } = await import('../src/tidewater/engine/math/Box3.js');
+const house = createBeachHouse(terrain);
+house.updateMatrixWorld(true);
+let houseMeshes = 0, houseVertices = 0;
+house.traverse(object => {
+  if (!object.isMesh) return;
+  houseMeshes++;
+  const position = object.geometry.getAttribute('position');
+  const normals = object.geometry.getAttribute('normal');
+  assert.ok(position?.count > 0 && position.array.every(Number.isFinite), 'House contains invalid positions');
+  assert.ok(normals?.count === position.count && normals.array.every(Number.isFinite), 'House contains invalid normals');
+  const index = object.geometry.getIndex();
+  assert.ok(!index || index.array.every(value => value >= 0 && value < position.count), 'House index exceeds its vertex buffer');
+  houseVertices += position.count;
+});
+const houseBounds = new Box3().setFromObject(house, true);
+const houseSize = houseBounds.getSize(new Vector3());
+assert.ok(houseMeshes > 0 && houseMeshes <= 25, 'House must batch architectural details into at most 25 meshes');
+assert.ok(houseSize.y > 7 && houseSize.y < 25 && houseSize.x > 8 && houseSize.x < 35 && houseSize.z > 8 && houseSize.z < 35, 'House dimensions do not describe a complete two-story beach home');
+const houseData = house.userData.house;
+const timber = house.children.find(object => object.name === 'house-weathered-timber');
+const timberPosition = timber?.geometry.getAttribute('position');
+const housePoint = new Vector3();
+assert.ok(houseData?.footings.length >= 6 && timberPosition, 'House foundation is missing');
+for (const footing of houseData.footings) {
+  const ground = terrain.heightAt(footing.x, footing.z);
+  assert.ok(ground > 1.5 && houseData.floorY - ground >= 0.5, 'House floor or foundation enters the surf zone');
+  let touchesSand = false;
+  for (let i = 0; i < timberPosition.count; i++) {
+    housePoint.fromBufferAttribute(timberPosition, i).applyMatrix4(timber.matrixWorld);
+    if (Math.abs(housePoint.x - footing.x) < 0.16 && Math.abs(housePoint.z - footing.z) < 0.16
+      && housePoint.y <= ground && housePoint.y >= ground - 0.4) {
+      touchesSand = true;
+      break;
+    }
+  }
+  assert.ok(touchesSand, 'House piling does not reach its actual terrain height');
+}
+
 const shore = computeShoreField(terrain, { res: 64 });
 assert.equal(shore.data.length, shore.res * shore.res * 4);
 assert.ok(shore.data.every(Number.isFinite) && shore.depth.every(Number.isFinite), 'Invalid shoreline propagation field');
@@ -133,5 +175,7 @@ for (let j = 4; j < res - 4; j++) {
 }
 
 console.log(JSON.stringify({ status: 'passed', modules: modules.size, localImports, assets: [...assets].sort(),
-  terrainSamples, beachAreaM2, beachAreaRatio, shorelineCells: shore.res ** 2, shoreDirectionCells: 64,
+  terrainSamples, beachAreaM2, beachAreaRatio, houseMeshes, houseVertices,
+  houseSizeMeters: { x: houseSize.x, y: houseSize.y, z: houseSize.z },
+  shorelineCells: shore.res ** 2, shoreDirectionCells: 64,
   limitation: 'CPU and asset checks only; WebGPU rendering requires a compatible browser.' }, null, 2));

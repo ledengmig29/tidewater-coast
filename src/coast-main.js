@@ -37,7 +37,7 @@ function selectView(name) {
   for (const button of document.querySelectorAll('[data-view]')) {
     button.setAttribute('aria-pressed', String(button.dataset.view === name));
   }
-  announce(`已切换到${{ shore: '岸边', overview: '俯瞰', waterline: '水线' }[name]}视角`);
+  announce(`已切换到${{ shore: '岸边', home: '木屋', overview: '俯瞰', waterline: '水线' }[name]}视角`);
 }
 
 function fail(error) {
