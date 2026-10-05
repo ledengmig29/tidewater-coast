@@ -2,15 +2,16 @@ import { Texture } from './engine/gpu/Texture.js';
 import { readTexture } from './engine/gpu/Readback.js';
 import { DAY_DURATION, SUNRISE_HOUR, daylightAt } from './DayCycle.js';
 
-export const VIDEO_FPS = 30;
+export const VIDEO_FPS = 60;
 export const VIDEO_FRAMES = DAY_DURATION * VIDEO_FPS;
 export const VIDEO_SIZE = { width: 1920, height: 1080 };
 
 export async function exportDayVideo(app, onProgress, signal) {
   if (typeof VideoEncoder === 'undefined') throw new Error('当前浏览器无法编码 MP4，请使用支持 WebCodecs 的 Chrome 或 Edge。');
   const { Output, Mp4OutputFormat, BufferTarget, VideoSampleSource, VideoSample, Quality, canEncodeVideo } = await import('mediabunny');
-  const config = { codec: 'avc', quality: new Quality({ bitrate: 8_000_000 }), latencyMode: 'quality' };
-  if (!await canEncodeVideo('avc', { ...VIDEO_SIZE, ...config })) throw new Error('当前设备不支持 1080p H.264 编码。');
+  // 1080p at 60 fps requires Level 4.2; automatic AVC selection ignores frame rate.
+  const config = { codec: 'avc', fullCodecString: 'avc1.64002a', quality: new Quality({ bitrate: 8_000_000 }), latencyMode: 'quality' };
+  if (!await canEncodeVideo('avc', { ...VIDEO_SIZE, ...config })) throw new Error('当前设备不支持 1080p 60 fps H.264 编码。');
 
   const saved = { paused: app.paused, dayPlaying: app.dayPlaying, dayElapsed: app.dayElapsed, hour: app.settings.timeOfDay,
     view: app.view, scale: app.settings.renderScale,
@@ -44,7 +45,7 @@ export async function exportDayVideo(app, onProgress, signal) {
     app.settings.timeOfDay = SUNRISE_HOUR;
     onProgress(0, '准备日出光照…');
     // Give the native atmospheric readback and temporal lighting time to settle.
-    for (let i = 0; i < 18; i++) {
+    for (let i = 0; i < Math.ceil(0.6 * VIDEO_FPS); i++) {
       checkAbort();
       app.frame(1 / VIDEO_FPS);
       await app.gpu.queue.onSubmittedWorkDone();

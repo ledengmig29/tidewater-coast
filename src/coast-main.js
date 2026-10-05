@@ -107,10 +107,10 @@ $('export-video').addEventListener('click', async () => {
     videoUrl = URL.createObjectURL(blob);
     const download = $('export-download');
     download.href = videoUrl;
-    download.download = 'coast-sunrise-to-sunset-30s.mp4';
+    download.download = 'coast-sunrise-to-sunset-30s-60fps.mp4';
     download.hidden = false;
     download.click();
-    $('export-status').textContent = '视频已生成：30 秒 · 1080p · 30 fps';
+    $('export-status').textContent = '视频已生成：30 秒 · 1080p · 60 fps';
     announce('日出到日落视频已生成并开始下载。设置中也可再次下载。');
   } catch (error) {
     $('export-status').textContent = `未生成视频：${error.message}`;

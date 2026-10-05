@@ -325,6 +325,8 @@ const { CoastalApp } = await import('../src/tidewater/CoastalApp.js');
 const { sunDirectionFromTime } = await import('../src/tidewater/sky/Sky.js');
 const { VIDEO_FPS, VIDEO_FRAMES, VIDEO_SIZE } = await import('../src/tidewater/exportDayVideo.js');
 assert.equal(DAY_DURATION, 30);
+assert.equal(VIDEO_FPS, 60, 'Export frame rate must be sixty fps');
+assert.equal(VIDEO_FRAMES, 1800, 'Export must contain eighteen hundred frames');
 assert.equal(VIDEO_FRAMES / VIDEO_FPS, 30, 'Export timestamps do not span a thirty-second track');
 assert.deepEqual(VIDEO_SIZE, { width: 1920, height: 1080 });
 assert.ok(Math.abs(sunDirectionFromTime(SUNRISE_HOUR).y) < 1e-8 && Math.abs(sunDirectionFromTime(SUNSET_HOUR).y) < 1e-8, 'Day cycle misses the actual sun horizon crossings');
